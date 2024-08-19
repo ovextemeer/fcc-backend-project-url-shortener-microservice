@@ -36,19 +36,24 @@ app.get('/api/hello', function (req, res) {
 // Start building project here
 
 app.post("/api/shorturl", function (req, res) {
-  dns.lookup(req.body.url.hostname, function (err) {
-    if (err) {
-      res.json({ error: 'invalid url' });
-    } else {
-      urls.push(req.body.url);
-      urls.forEach((url, index) => {
-        app.get(`/api/shorturl/${index + 1}`, function (req, res) {
-          res.redirect(url);
-        })
-      });
-      res.json({ original_url: req.body.url, short_url: urls.length });
-    }
-  });
+  let url = new URL(req.body.url);
+  if (url.protocol !== "http:") {
+    res.json({ error: 'invalid url' });
+  } else {
+    dns.lookup(url.hostname, function (err) {
+      if (err) {
+        res.json({ error: 'invalid url' });
+      } else {
+        urls.push(url.toString());
+        urls.forEach((url, index) => {
+          app.get(`/api/shorturl/${index + 1}`, function (req, res) {
+            res.redirect(url);
+          })
+        });
+        res.json({ original_url: url.toString(), short_url: urls.length });
+      }
+    });
+  }
 });
 
 // End building project here
